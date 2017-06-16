@@ -23,11 +23,11 @@ def union(rect1, rect2):
     return a1 + a2 - intersection(rect1, rect2)
     
 def IOU(rect1, rect2):
-    intrsect = intersection(rect1, rect2)
-    union = union(rect1, rect2)
+    intersection_area = intersection(rect1, rect2)
+    union_area = union(rect1, rect2)
     
-    if union > 0:
-        return intrsect / union
+    if union_area > 0:
+        return intersection_area / union_area
     return 0
     
 def iou_dist_function(v1, v2):
@@ -37,17 +37,33 @@ def iou_dist_function(v1, v2):
 if __name__ == "__main__":
 
     vectors = []
-    paths = os.listdir(sys.argv[1])
-    
+
+    # paths = os.listdir(sys.argv[1])
+    # for path in paths:
+    #     f = open(sys.argv[1] + '/' + path)
+    #     for line in f:
+    #         vectors.append(np.array([float(l) for l in line.split()[1:]]))
+    #     f.close()
+    # #    if len(vectors) > 1000:
+    #         break
+
+    path_labels =  '/home/antonitsch/GitRepos/darknet/VOCdevkit/VOC2007/labels/'
+    paths = open(sys.argv[1])
     for path in paths:
-        f = open(sys.argv[1] + path)
+        path_split = path[:-5].split('/')
+        f = open(path_labels + path_split[-1] + '.txt')
         for line in f:
             vectors.append(np.array([float(l) for l in line.split()[1:]]))
-    
+        f.close()
+        if len(vectors) > 5:
+            break 
+    print(vectors)
+    print('dataset loaded')
     vectors = np.array(vectors) ## train data goes here
     
-    means = [np.array(vectors[r.randint(0, len(vectors))]) for x in range(5)] ##initial centroids go here 
+    means = [vectors[r.randint(0, len(vectors)-1)] for x in range(5)] ##initial centroids go here 
 
+    print('clustering')
     clusterer = KMeansClusterer(5, iou_dist_function, initial_means=means, avoid_empty_clusters=True)
     clusters = clusterer.cluster(vectors, True)
 
