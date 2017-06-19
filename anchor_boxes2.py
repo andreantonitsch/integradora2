@@ -32,7 +32,12 @@ def IOU(rect1, rect2):
     
 def iou_dist_function(v1, v2):
     return 1 - IOU(v1, v2)
-    
+
+def area(v):
+    return v[0]*v[1]
+
+def simplified_iou(v1, v2):
+    return min(area(v1), area(v2)) / max(area(v1), area(v2))       
 
 if __name__ == "__main__":
 
@@ -53,17 +58,19 @@ if __name__ == "__main__":
         path_split = path[:-5].split('/')
         f = open(path_labels + path_split[-1] + '.txt')
         for line in f:
-            vectors.append(np.array([float(l) for l in line.split()[1:]]))
+            box = np.array([float(l) for l in line.split()[1:]])
+            vectors.append(box[2:])
         f.close()
 
     print('dataset loaded')
     vectors = np.array(vectors) ## train data goes here
     
-    means = [vectors[r.randint(0, len(vectors)-1)] for x in range(5)] ##initial centroids go here 
+    means = [vectors[r.randint(0, len(vectors)-1)][:] for x in range(5)] ##initial centroids go here 
 
     print('clustering')
-    clusterer = KMeansClusterer(5, iou_dist_function, initial_means=means, avoid_empty_clusters=True)
+    clusterer = KMeansClusterer(5, simplified_iou, initial_means=means, avoid_empty_clusters=True)
     clusters = clusterer.cluster(vectors, True)
-
+    print(clusters)
     anchors = clusterer.means()
+
     print(anchors)
