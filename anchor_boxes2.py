@@ -37,7 +37,7 @@ def area(v):
     return v[0]*v[1]
 
 def simplified_iou(v1, v2):
-    return min(area(v1), area(v2)) / max(area(v1), area(v2))       
+    return 1 - (min(area(v1), area(v2)) / max(area(v1), area(v2)))      
 
 if __name__ == "__main__":
 
