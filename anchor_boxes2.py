@@ -9,19 +9,22 @@ import random as r
 ## le arquivos compostos por linhas no formato <object-class> <x> <y> <width> <height>
 ## retorna anchors
 
+# intersecção de dois retangulos (w, h)
 def intersection(rect1, rect2):
-    dx = min(rect1[0], rect2[0]) - max(rect1[0]+rect1[2], rect2[0]+rect2[2])
-    dy = min(rect1[1], rect2[1]) - max(rect1[1]+rect1[3], rect2[1]+rect2[3])
-    if dx > 0 and dy > 0:
-        return dx * dy
+    overlap_x = min(rect1[0], rect2[0])
+    overlap_y = min(rect1[1], rect2[1])
+    if overlap_x > 0 and overlap_y > 0:
+        return overlap_x * overlap_y
     return 0
-    
+
+# união de dois retangulos (w, h)    
 def union(rect1, rect2):
-    a1 = rect1[2] * rect1[3]
-    a2 = rect2[2] * rect2[3]
+    a1 = rect1[0] * rect1[1]
+    a2 = rect2[0] * rect2[1]
     
     return a1 + a2 - intersection(rect1, rect2)
-    
+
+#intersection over union    
 def IOU(rect1, rect2):
     intersection_area = intersection(rect1, rect2)
     union_area = union(rect1, rect2)
@@ -33,11 +36,20 @@ def IOU(rect1, rect2):
 def iou_dist_function(v1, v2):
     return 1 - IOU(v1, v2)
 
-def area(v):
-    return v[0]*v[1]
 
-def simplified_iou(v1, v2):
-    return 1 - (min(area(v1), area(v2)) / max(area(v1), area(v2)))      
+# clusteriza um vetor de retangulos (w,h)
+def clusterize( data, means=None ):
+
+    if not means:
+        means = [vectors[r.randint(0, len(vectors)-1)][:] for x in range(5)] ##initial centroids go here 
+
+    clusterer = KMeansClusterer(5, iou_dist_function, initial_means=means, avoid_empty_clusters=True)
+    clusters = clusterer.cluster(vectors, True)
+    #print(clusters)
+    anchors = clusterer.means()
+
+    return anchors
+
 
 if __name__ == "__main__":
 
@@ -55,22 +67,16 @@ if __name__ == "__main__":
     path_labels =  '/home/antonitsch/GitRepos/darknet/VOCdevkit/VOC2007/labels/'
     paths = open(sys.argv[1])
     for path in paths:
-        path_split = path[:-5].split('/')
-        f = open(path_labels + path_split[-1] + '.txt')
+        f = open(path[:-1].replace('JPEGImages', 'labels').replace('.jpg','.txt'))
         for line in f:
             box = np.array([float(l) for l in line.split()[1:]])
+            # append os w e h
             vectors.append(box[2:])
         f.close()
 
     print('dataset loaded')
     vectors = np.array(vectors) ## train data goes here
     
-    means = [vectors[r.randint(0, len(vectors)-1)][:] for x in range(5)] ##initial centroids go here 
-
-    print('clustering')
-    clusterer = KMeansClusterer(5, simplified_iou, initial_means=means, avoid_empty_clusters=True)
-    clusters = clusterer.cluster(vectors, True)
-    print(clusters)
-    anchors = clusterer.means()
-
+    anchors = clusterize(vectors)
     print(anchors)
+    
