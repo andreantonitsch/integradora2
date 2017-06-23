@@ -1,15 +1,16 @@
-from nltk.cluster import KMeansClusterer, euclidean_distance
+from nltk.cluster import KMeansClusterer
 import numpy as np
 import os
 import sys
 import random as r
 
 ## recebe um path como input.
-## faz parse de cada .txt na pasta de input
-## le arquivos compostos por linhas no formato <object-class> <x> <y> <width> <height>
-## retorna anchors
+## o input é o train.txt definido no formato do YOLO
+## com a lista de imagens em uma pasta irmã da pasta contendo a labels de cada imagem.
+## as labels devem estar  no formato <object class> <x> <y> <w> <h>
+## o k-means utiiza somente as informações de <w> <h>
 
-# intersecÃ§Ã£o de dois retangulos (w, h)
+# intersecção de duas larguras e alturas (w, h)
 def intersection(rect1, rect2):
     overlap_x = min(rect1[0], rect2[0])
     overlap_y = min(rect1[1], rect2[1])
@@ -17,7 +18,7 @@ def intersection(rect1, rect2):
         return overlap_x * overlap_y
     return 0
 
-# uniÃ£o de dois retangulos (w, h)    
+# união de dois retangulos (w, h)    
 def union(rect1, rect2):
     a1 = rect1[0] * rect1[1]
     a2 = rect2[0] * rect2[1]
@@ -41,6 +42,7 @@ def iou_dist_function(v1, v2):
 def clusterize( data, means=None ):
 
     if not means:
+        # centroides iniciais  = pontos aleatorios no dataset
         means = [vectors[r.randint(0, len(vectors)-1)][:] for x in range(5)] ##initial centroids go here 
 
     clusterer = KMeansClusterer(5, iou_dist_function, initial_means=means, avoid_empty_clusters=True)
@@ -55,19 +57,14 @@ if __name__ == "__main__":
 
     vectors = []
 
-    # paths = os.listdir(sys.argv[1])
-    # for path in paths:
-    #     f = open(sys.argv[1] + '/' + path)
-    #     for line in f:
-    #         vectors.append(np.array([float(l) for l in line.split()[1:]]))
-    #     f.close()
-    # #    if len(vectors) > 1000:
-    #         break
-
-    path_labels =  '/home/antonitsch/GitRepos/darknet/VOCdevkit/VOC2007/labels/'
     paths = open(sys.argv[1])
+    
+    image_folder_name = 'JPEGImages'
+    labels_folder_name = 'labels'
+    
     for path in paths:
-        f = open(path[:-1].replace('JPEGImages', 'labels').replace('.jpg','.txt'))
+        ## substitui o nome da pasta de imagens pela de labels
+        f = open(path[:-1].replace(image_folder_name, labels_folder_name).replace('.jpg','.txt'))
         for line in f:
             box = np.array([float(l) for l in line.split()[1:]])
             # append os w e h
