@@ -4,6 +4,10 @@
 # Author: Trevor Cohn <tacohn@cs.mu.oz.au>
 # URL: <http://nltk.org/>
 # For license information, see LICENSE.TXT
+
+####
+## Edited by André Antonitsch
+####
 from __future__ import print_function, unicode_literals, division
 
 import copy
